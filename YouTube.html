@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <title>বাংলা ভয়েসে গান চালান</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 50px;
+    }
+    button {
+      font-size: 20px;
+      padding: 10px 20px;
+    }
+    iframe {
+      margin-top: 20px;
+      width: 560px;
+      height: 315px;
+    }
+  </style>
+</head>
+<body>
+  <h1>ভয়েসে ইউটিউব গান চালান</h1>
+  <button onclick="startListening()">ভয়েস দিন</button>
+  <p id="status">মাইক্রোফোন চালু নয়</p>
+  <div id="player"></div>
+
+  <script>
+    const statusEl = document.getElementById("status");
+    const playerEl = document.getElementById("player");
+
+    function startListening() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'bn-BD'; // বাংলা ভাষা
+
+      recognition.start();
+      statusEl.textContent = "শোনা হচ্ছে...";
+
+      recognition.onresult = function (event) {
+        const transcript = event.results[0][0].transcript;
+        statusEl.textContent = "আপনি বললেন: " + transcript;
+        searchYouTube(transcript);
+      };
+
+      recognition.onerror = function (event) {
+        statusEl.textContent = "ভয়েস শনাক্তে সমস্যা হয়েছে: " + event.error;
+      };
+    }
+
+    async function searchYouTube(query) {
+      const apiKey = "AIzaSyBOXM9unrZcq-dbpZJrJMPXnbegcFI9aoM";
+      const searchQuery = encodeURIComponent(query);
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchQuery}&key=${apiKey}&type=video&maxResults=1`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.items && data.items.length > 0) {
+          const videoId = data.items[0].id.videoId;
+          playerEl.innerHTML = `
+            <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
+              frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
+            </iframe>`;
+        } else {
+          playerEl.innerHTML = "<p>কোনো ভিডিও পাওয়া যায়নি।</p>";
+        }
+      } catch (error) {
+        playerEl.innerHTML = "<p>ভিডিও লোড করতে সমস্যা হয়েছে।</p>";
+      }
+    }
+  </script>
+</body>
+</html>
